@@ -171,58 +171,99 @@ function renderTemplate(templateName, data = {}) {
   const layoutPath = path.join(__dirname, '..', 'templates', 'layout.html');
   const pagePath = path.join(__dirname, '..', 'templates', `${templateName}.html`);
 
-  let layout = fs.readFileSync(layoutPath, 'utf8');
-  let page = fs.readFileSync(pagePath, 'utf8');
+  const layout = fs.readFileSync(layoutPath, 'utf8');
+  const page = fs.readFileSync(pagePath, 'utf8');
 
-  // Replace {{> content}} in layout with page content
-  let html = layout.replace('{{> content}}', page);
+  const html = layout.replace('{{> content}}', () => page);
+  return render(html, data);
+}
 
-  // Handle {{#if var}} ... {{else}} ... {{/if}}
-  html = html.replace(/\{\{#if\s+(\w+(?:\.\w+)*)\}\}([\s\S]*?)\{\{\/if\}\}/g, (_, varName, block) => {
-    const val = resolveVar(data, varName);
-    const [ifBlock, elseBlock] = block.split('{{else}}');
-    if (val && (!Array.isArray(val) || val.length > 0)) {
-      return ifBlock || '';
-    }
-    return elseBlock || '';
-  });
+function render(tpl, data) {
+  tpl = processBlocks(tpl, data);
 
-  // Handle {{#each var}} ... {{/each}}
-  html = html.replace(/\{\{#each\s+(\w+(?:\.\w+)*)\}\}([\s\S]*?)\{\{\/each\}\}/g, (_, varName, block) => {
-    const arr = resolveVar(data, varName);
-    if (!Array.isArray(arr)) return '';
-    return arr.map((item, index) => {
-      let rendered = block;
-      // Replace {{this.prop}} or {{prop}} within each
-      rendered = rendered.replace(/\{\{(?:this\.)?(\w+(?:\.\w+)*)\}\}/g, (_, prop) => {
-        if (prop === '@index') return index;
-        const val = resolveVar(item, prop);
-        return escapeHtml(val != null ? String(val) : '');
-      });
-      // Handle nested #if inside each
-      rendered = rendered.replace(/\{\{#if\s+(?:this\.)?(\w+(?:\.\w+)*)\}\}([\s\S]*?)\{\{\/if\}\}/g, (_, vn, blk) => {
-        const v = resolveVar(item, vn);
-        const [ib, eb] = blk.split('{{else}}');
-        if (v && (!Array.isArray(v) || v.length > 0)) return ib || '';
-        return eb || '';
-      });
-      return rendered;
-    }).join('');
-  });
-
-  // Replace {{var}} with escaped values
-  html = html.replace(/\{\{(\w+(?:\.\w+)*)\}\}/g, (_, varName) => {
-    const val = resolveVar(data, varName);
-    return escapeHtml(val != null ? String(val) : '');
-  });
-
-  // Replace {{{var}}} with raw (unescaped) values
-  html = html.replace(/\{\{\{(\w+(?:\.\w+)*)\}\}\}/g, (_, varName) => {
+  // Triple-brace raw values first, so they don't get re-matched by the escaped pattern
+  tpl = tpl.replace(/\{\{\{([\w.]+)\}\}\}/g, (_, varName) => {
     const val = resolveVar(data, varName);
     return val != null ? String(val) : '';
   });
 
-  return html;
+  tpl = tpl.replace(/\{\{([\w.@]+)\}\}/g, (_, varName) => {
+    const val = resolveVar(data, varName);
+    return escapeHtml(val != null ? String(val) : '');
+  });
+
+  return tpl;
+}
+
+function processBlocks(tpl, data) {
+  const openRe = /\{\{#(each|if)\s+([\w.]+)\}\}/;
+  while (true) {
+    const m = tpl.match(openRe);
+    if (!m) break;
+    const tag = m[1];
+    const varName = m[2];
+    const startIdx = m.index;
+    const openLen = m[0].length;
+
+    // Find the matching close, tracking nesting of the same tag type only
+    const tagRe = new RegExp(`\\{\\{#${tag}\\s+[\\w.]+\\}\\}|\\{\\{\\/${tag}\\}\\}`, 'g');
+    tagRe.lastIndex = startIdx + openLen;
+    let depth = 1;
+    let closeIdx = -1;
+    let mm;
+    while ((mm = tagRe.exec(tpl)) !== null) {
+      if (mm[0].startsWith(`{{#${tag}`)) {
+        depth++;
+      } else {
+        depth--;
+        if (depth === 0) { closeIdx = mm.index; break; }
+      }
+    }
+    if (closeIdx === -1) {
+      // Unmatched open tag — strip it to avoid infinite loop
+      tpl = tpl.slice(0, startIdx) + tpl.slice(startIdx + openLen);
+      continue;
+    }
+
+    const inner = tpl.slice(startIdx + openLen, closeIdx);
+    const before = tpl.slice(0, startIdx);
+    const after = tpl.slice(closeIdx + `{{/${tag}}}`.length);
+
+    let replacement = '';
+    if (tag === 'if') {
+      const val = resolveVar(data, varName);
+      const [ifBlock, elseBlock] = splitElse(inner);
+      const truthy = val && (!Array.isArray(val) || val.length > 0);
+      if (truthy) replacement = render(ifBlock, data);
+      else if (elseBlock !== undefined) replacement = render(elseBlock, data);
+    } else {
+      const arr = resolveVar(data, varName);
+      if (Array.isArray(arr)) {
+        replacement = arr.map((item, index) => {
+          const ctx = (typeof item === 'object' && item !== null)
+            ? { ...data, ...item, '@index': index, this: item }
+            : { ...data, this: item, '@index': index };
+          return render(inner, ctx);
+        }).join('');
+      }
+    }
+    tpl = before + replacement + after;
+  }
+  return tpl;
+}
+
+function splitElse(inner) {
+  const re = /\{\{#if\s+[\w.]+\}\}|\{\{\/if\}\}|\{\{else\}\}/g;
+  let depth = 0;
+  let m;
+  while ((m = re.exec(inner)) !== null) {
+    if (m[0].startsWith('{{#if')) depth++;
+    else if (m[0] === '{{/if}}') depth--;
+    else if (m[0] === '{{else}}' && depth === 0) {
+      return [inner.slice(0, m.index), inner.slice(m.index + '{{else}}'.length)];
+    }
+  }
+  return [inner, undefined];
 }
 
 function resolveVar(obj, path) {

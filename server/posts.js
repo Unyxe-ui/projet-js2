@@ -3,7 +3,7 @@ const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const db = require('./database');
 const sessionMgr = require('./session');
-const { parseBody, parseMultipart, renderTemplate, sendHTML, redirect, parseQuery } = require('./utils');
+const { parseBody, parseMultipart, renderTemplate, sendHTML, redirect, parseQuery, escapeHtml } = require('./utils');
 
 function getCategories() {
   return db.get().all('SELECT id, name FROM categories ORDER BY name');
@@ -73,6 +73,11 @@ function timeAgo(dateStr) {
 // ── Home / List posts ──
 function homePage(req, res) {
   const user = sessionMgr.getUser(req);
+
+  if (!user) {
+    return sendHTML(res, renderTemplate('landing', { user: null }));
+  }
+
   const query = parseQuery(req.url);
   const d = db.get();
   const categories = getCategories();
@@ -227,7 +232,7 @@ function viewPost(req, res, params) {
   post.comments = comments;
   post.hasComments = comments.length > 0;
   post.hasImage = !!post.image_path;
-  post.contentHtml = post.content.replace(/\n/g, '<br>');
+  post.contentHtml = escapeHtml(post.content).replace(/\n/g, '<br>');
 
   sendHTML(res, renderTemplate('post', { user, post }));
 }
