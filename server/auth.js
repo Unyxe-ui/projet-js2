@@ -5,7 +5,7 @@ const { parseBody, renderTemplate, sendHTML, redirect } = require('./utils');
 
 function registerPage(req, res) {
   if (sessionMgr.getUser(req)) return redirect(res, '/');
-  sendHTML(res, renderTemplate('register', { user: null, error: '', email: '', username: '' }));
+  redirect(res, '/login?panel=signup');
 }
 
 async function registerSubmit(req, res) {
@@ -23,19 +23,40 @@ async function registerSubmit(req, res) {
   else if (password !== confirmPassword) error = 'Les mots de passe ne correspondent pas';
 
   if (error) {
-    return sendHTML(res, renderTemplate('register', { user: null, error, email, username }));
+    return sendHTML(res, renderTemplate('login', {
+      user: null,
+      error,
+      email,
+      username,
+      identifier: '',
+      panel: 'signup'
+    }));
   }
 
   const d = db.get();
 
   const emailExists = d.get('SELECT COUNT(*) as c FROM users WHERE email = ?', [email]);
   if (emailExists && emailExists.c > 0) {
-    return sendHTML(res, renderTemplate('register', { user: null, error: 'Cet e-mail est déjà utilisé', email, username }));
+    return sendHTML(res, renderTemplate('login', {
+      user: null,
+      error: 'Cet e-mail est déjà utilisé',
+      email,
+      username,
+      identifier: '',
+      panel: 'signup'
+    }));
   }
 
   const usernameExists = d.get('SELECT COUNT(*) as c FROM users WHERE username = ?', [username]);
   if (usernameExists && usernameExists.c > 0) {
-    return sendHTML(res, renderTemplate('register', { user: null, error: 'Ce nom d\'utilisateur est déjà pris', email, username }));
+    return sendHTML(res, renderTemplate('login', {
+      user: null,
+      error: 'Ce nom d\'utilisateur est déjà pris',
+      email,
+      username,
+      identifier: '',
+      panel: 'signup'
+    }));
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -47,7 +68,18 @@ async function registerSubmit(req, res) {
 
 function loginPage(req, res) {
   if (sessionMgr.getUser(req)) return redirect(res, '/');
-  sendHTML(res, renderTemplate('login', { user: null, error: '', identifier: '' }));
+
+  const url = req.url || '';
+  const panel = url.includes('panel=signup') ? 'signup' : '';
+
+  sendHTML(res, renderTemplate('login', {
+    user: null,
+    error: '',
+    identifier: '',
+    email: '',
+    username: '',
+    panel
+  }));
 }
 
 async function loginSubmit(req, res) {

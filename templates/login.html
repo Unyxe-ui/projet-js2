@@ -1,24 +1,166 @@
-<div class="auth-page">
-  <div class="auth-card">
-    <h1>Login</h1>
-    <p class="auth-subtitle">Welcome back to the forum</p>
+<div class="slider-page">
+  <div class="slider-container" id="slider-container">
 
-    {{#if error}}
-      <div class="alert alert-error">{{error}}</div>
-    {{/if}}
+    <div class="form-container sign-up-container">
+      <form method="POST" action="/register" class="slider-form" id="signup-form" novalidate>
+        <h1>Créer un compte</h1>
 
-    <form method="POST" action="/login" class="auth-form">
-      <div class="form-group">
-        <label for="identifier">Email or Username</label>
-        <input type="text" id="identifier" name="identifier" value="{{identifier}}" required autofocus>
+        {{#if error}}
+          <div class="slider-alert">{{error}}</div>
+        {{/if}}
+
+        <input type="email" id="su-email" name="email" value="{{email}}" placeholder="Email" required autocomplete="off">
+        <span class="field-error" id="su-email-err"></span>
+
+        <input type="text" id="su-username" name="username" value="{{username}}" placeholder="Nom d'utilisateur" minlength="3" maxlength="30" required autocomplete="off">
+        <span class="field-error" id="su-username-err"></span>
+
+        <div class="pw-wrapper">
+          <input type="password" id="su-password" name="password" placeholder="Mot de passe" minlength="6" required>
+          <button type="button" class="toggle-pw" data-target="su-password">👁</button>
+        </div>
+        <div class="strength-track"><div class="strength-bar" id="strength-bar"></div></div>
+        <span class="strength-label" id="strength-label"></span>
+        <span class="field-error" id="su-password-err"></span>
+
+        <div class="pw-wrapper">
+          <input type="password" id="su-confirm" name="confirm_password" placeholder="Confirmer votre mot de passe" minlength="6" required>
+          <button type="button" class="toggle-pw" data-target="su-confirm">👁</button>
+        </div>
+        <span class="field-error" id="su-confirm-err"></span>
+
+        <button type="submit" class="btn-slider-primary">Se déconnecter</button>
+      </form>
+    </div>
+
+    <div class="form-container sign-in-container">
+      <form method="POST" action="/login" class="slider-form" id="signin-form" novalidate>
+        <h1>Connexion</h1>
+
+        {{#if error}}
+          <div class="slider-alert">{{error}}</div>
+        {{/if}}
+
+        <input type="text" id="si-identifier" name="identifier" value="{{identifier}}" placeholder="Email ou Nom d'utilisateur" required autocomplete="off">
+        <span class="field-error" id="si-identifier-err"></span>
+
+        <div class="pw-wrapper">
+          <input type="password" id="si-password" name="password" placeholder="Mot de passe" required>
+          <button type="button" class="toggle-pw" data-target="si-password">👁</button>
+        </div>
+        <span class="field-error" id="si-password-err"></span>
+
+        <a href="#" class="forgot-link">Mot de passe oublié ?</a>
+        <button type="submit" class="btn-slider-primary">Se connecter</button>
+      </form>
+    </div>
+
+    <div class="overlay-container">
+      <div class="overlay">
+        <div class="overlay-panel overlay-left">
+          <span class="overlay-icon">◆</span>
+          <h1>Bon retour !</h1>
+          <p>Vous avez déjà un compte ?<br>Connectez-vous et rejoignez la conversation.</p>
+          <button class="btn-slider-ghost" id="btn-go-signin">Se connecter</button>
+        </div>
+        <div class="overlay-panel overlay-right">
+          <span class="overlay-icon">◆</span>
+          <h1>Bienvenue !</h1>
+          <p>Vous n'avez pas encore de compte ?<br>Rejoignez le forum et commencez à échanger.</p>
+          <button class="btn-slider-ghost" id="btn-go-signup">S'inscrire</button>
+        </div>
       </div>
-      <div class="form-group">
-        <label for="password">Password</label>
-        <input type="password" id="password" name="password" required>
-      </div>
-      <button type="submit" class="btn btn-primary btn-full">Log In</button>
-    </form>
+    </div>
 
-    <p class="auth-footer">Don't have an account? <a href="/register">Register</a></p>
   </div>
 </div>
+
+<script>
+  var container = document.getElementById('slider-container');
+
+  document.getElementById('btn-go-signup').addEventListener('click', function() {
+    container.classList.add('right-panel-active');
+  });
+
+  document.getElementById('btn-go-signin').addEventListener('click', function() {
+    container.classList.remove('right-panel-active');
+  });
+
+  document.querySelectorAll('.toggle-pw').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var input = document.getElementById(btn.getAttribute('data-target'));
+      input.type = input.type === 'password' ? 'text' : 'password';
+      btn.textContent = input.type === 'password' ? '👁' : '🙈';
+    });
+  });
+
+  var pwInput = document.getElementById('su-password');
+  var bar     = document.getElementById('strength-bar');
+  var label   = document.getElementById('strength-label');
+
+  pwInput.addEventListener('input', function() {
+    var pw = pwInput.value;
+    var score = 0;
+    if (pw.length >= 6)  score++;
+    if (pw.length >= 10) score++;
+    if (/[0-9]/.test(pw) || /[^a-zA-Z0-9]/.test(pw)) score++;
+    var widths  = ['0%',  '33%',    '66%',     '100%'];
+    var colors  = ['transparent', '#ff6b6b', '#f0a500', '#c8f560'];
+    var labels  = ['',    'Faible', 'Moyen',   'Fort'];
+    bar.style.width      = widths[score];
+    bar.style.background = colors[score];
+    label.textContent    = pw.length > 0 ? labels[score] : '';
+  });
+
+  document.getElementById('signup-form').addEventListener('submit', function(e) {
+    var ok = true;
+    document.getElementById('su-email-err').textContent    = '';
+    document.getElementById('su-username-err').textContent = '';
+    document.getElementById('su-password-err').textContent = '';
+    document.getElementById('su-confirm-err').textContent  = '';
+
+    var email    = document.getElementById('su-email').value.trim();
+    var username = document.getElementById('su-username').value.trim();
+    var password = document.getElementById('su-password').value;
+    var confirm  = document.getElementById('su-confirm').value;
+
+    if (!email.includes('@') || !email.includes('.')) {
+      document.getElementById('su-email-err').textContent = 'Email invalide';
+      ok = false;
+    }
+    if (username.length < 3) {
+      document.getElementById('su-username-err').textContent = 'Minimum 3 caractères';
+      ok = false;
+    }
+    if (password.length < 6) {
+      document.getElementById('su-password-err').textContent = 'Minimum 6 caractères';
+      ok = false;
+    }
+    if (password !== confirm) {
+      document.getElementById('su-confirm-err').textContent = 'Les mots de passe ne correspondent pas';
+      ok = false;
+    }
+    if (!ok) e.preventDefault();
+  });
+
+  document.getElementById('signin-form').addEventListener('submit', function(e) {
+    var ok = true;
+    document.getElementById('si-identifier-err').textContent = '';
+    document.getElementById('si-password-err').textContent   = '';
+
+    if (document.getElementById('si-identifier').value.trim() === '') {
+      document.getElementById('si-identifier-err').textContent = 'Ce champ est requis';
+      ok = false;
+    }
+    if (document.getElementById('si-password').value === '') {
+      document.getElementById('si-password-err').textContent = 'Ce champ est requis';
+      ok = false;
+    }
+    if (!ok) e.preventDefault();
+  });
+
+  var serverPanel = '{{panel}}';
+  if (window.location.href.indexOf('panel=signup') !== -1 || serverPanel === 'signup') {
+    container.classList.add('right-panel-active');
+  }
+</script>
