@@ -47,7 +47,6 @@
     </div>
   </article>
 
-  <!-- Comments Section -->
   <section class="comments-section" id="comments">
     <h2>Comments ({{post.commentCount}})</h2>
 
@@ -86,7 +85,6 @@
               </form>
             </div>
 
-            <!-- Hidden edit form -->
             <form method="POST" action="/comment/{{id}}/edit" class="edit-comment-form" id="edit-comment-{{id}}" style="display:none;">
               <textarea name="content" rows="2">{{content}}</textarea>
               <div class="form-actions-inline">

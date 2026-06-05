@@ -18,12 +18,12 @@
       </a>
       <div class="nav-links">
         {{#if user}}
-          <a href="/post/new" class="btn btn-primary btn-sm">+ New Post</a>
+          <a href="/post/new" class="btn btn-primary btn-sm">+ Nouveau Post</a>
           <span class="nav-user">{{user.username}}</span>
-          <a href="/logout" class="btn btn-ghost btn-sm">Logout</a>
+          <a href="/logout" class="btn btn-ghost btn-sm">Déconnection</a>
         {{else}}
-          <a href="/login" class="btn btn-ghost btn-sm">Login</a>
-          <a href="/register" class="btn btn-primary btn-sm">Register</a>
+          <a href="/login" class="btn btn-ghost btn-sm">Connexion</a>
+          <a href="/register" class="btn btn-primary btn-sm">Inscription</a>
         {{/if}}
       </div>
     </div>
