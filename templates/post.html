@@ -69,7 +69,7 @@
               {{#if isOwner}}
                 <button class="btn btn-ghost btn-xs edit-comment-btn" data-id="{{id}}" data-content="{{content}}">Modifier</button>
                 <form method="POST" action="/comment/{{id}}/delete" class="inline-form" onsubmit="return confirm('Delete this comment?')">
-                  <button type="submit" class="btn btn-danger btn-xs">Delete</button>
+                  <button type="submit" class="btn btn-danger btn-xs">Supprimer</button>
                 </form>
               {{/if}}
             </div>
