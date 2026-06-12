@@ -7,7 +7,7 @@
         <span class="post-author">{{post.username}}</span>
         <span class="post-time">{{post.timeAgo}}</span>
         {{#if post.isOwner}}
-          <a href="/post/{{post.id}}/edit" class="btn btn-ghost btn-xs">Edit</a>
+          <a href="/post/{{post.id}}/edit" class="btn btn-ghost btn-xs">Modifier</a>
           <form method="POST" action="/post/{{post.id}}/delete" class="inline-form" onsubmit="return confirm('Delete this post?')">
             <button type="submit" class="btn btn-danger btn-xs">Delete</button>
           </form>
