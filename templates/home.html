@@ -2,7 +2,7 @@
   <aside class="sidebar">
     <div class="sidebar-section">
       <h3 class="sidebar-title">Catégories</h3>
-      <a href="/" class="filter-link {{#if activeCategory}}{{else}}active{{/if}}">All</a>
+      <a href="/" class="filter-link {{#if activeCategory}}{{else}}active{{/if}}">Tout</a>
       {{#each categories}}
         <a href="/?category={{id}}" class="filter-link" data-cat="{{id}}">{{name}}</a>
       {{/each}}
@@ -10,9 +10,9 @@
 
     {{#if user}}
     <div class="sidebar-section">
-      <h3 class="sidebar-title">My Feed</h3>
-      <a href="/?filter=mine" class="filter-link" data-filter="mine">My Posts</a>
-      <a href="/?filter=liked" class="filter-link" data-filter="liked">Liked Posts</a>
+      <h3 class="sidebar-title">Mon fil d'actualité</h3>
+      <a href="/?filter=mine" class="filter-link" data-filter="mine">Mes Posts</a>
+      <a href="/?filter=liked" class="filter-link" data-filter="liked">Publications aimées</a>
     </div>
     {{/if}}
   </aside>
