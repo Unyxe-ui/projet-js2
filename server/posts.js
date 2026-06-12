@@ -175,25 +175,25 @@ async function createPostSubmit(req, res) {
   }
 
   if (!title || !content) {
-    const categories = getCategories();
-    return sendHTML(res, renderTemplate('create-post', { user, categories, error: 'Le titre et le contenu sont obligatoires' }));
+    const categories = getCategories().map(c => ({ ...c, selected: categoryIds && categoryIds.includes(String(c.id)) }));
+    return sendHTML(res, renderTemplate('create-post', { user, categories, error: 'Le titre et le contenu sont obligatoires', title, content }));
   }
 
   if (!categoryIds || categoryIds.length === 0) {
-    const categories = getCategories();
-    return sendHTML(res, renderTemplate('create-post', { user, categories, error: 'Sélectionnez au moins une catégorie' }));
+    const categories = getCategories().map(c => ({ ...c, selected: categoryIds && categoryIds.includes(String(c.id)) }));
+    return sendHTML(res, renderTemplate('create-post', { user, categories, error: 'Sélectionnez au moins une catégorie', title, content }));
   }
 
   let imagePath = '';
   if (imageFile && imageFile.data && imageFile.data.length > 0) {
     const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowed.includes(imageFile.contentType)) {
-      const categories = getCategories();
-      return sendHTML(res, renderTemplate('create-post', { user, categories, error: 'Format d\'image non supporté (JPEG, PNG, GIF, WebP)' }));
+      const categories = getCategories().map(c => ({ ...c, selected: categoryIds && categoryIds.includes(String(c.id)) }));
+      return sendHTML(res, renderTemplate('create-post', { user, categories, error: 'Format d\'image non supporté (JPEG, PNG, GIF, WebP)', title, content }));
     }
     if (imageFile.data.length > 20 * 1024 * 1024) {
-      const categories = getCategories();
-      return sendHTML(res, renderTemplate('create-post', { user, categories, error: 'L\'image ne doit pas dépasser 20 Mo' }));
+      const categories = getCategories().map(c => ({ ...c, selected: categoryIds && categoryIds.includes(String(c.id)) }));
+      return sendHTML(res, renderTemplate('create-post', { user, categories, error: 'L\'image ne doit pas dépasser 20 Mo', title, content }));
     }
     const ext = path.extname(imageFile.filename) || '.jpg';
     const fileName = uuidv4() + ext;
@@ -292,20 +292,26 @@ async function editPostSubmit(req, res, params) {
   }
 
   if (!title || !content) {
-    const categories = getCategories();
-    return sendHTML(res, renderTemplate('edit-post', { user, post, categories, error: 'Le titre et le contenu sont obligatoires' }));
+    post.categories = getPostCategories(post.id);
+    const postCatIds = post.categories.map(c => c.id);
+    const categories = getCategories().map(c => ({ ...c, selected: postCatIds.includes(c.id) }));
+    return sendHTML(res, renderTemplate('edit-post', { user, post: { ...post, title, content }, categories, error: 'Le titre et le contenu sont obligatoires' }));
   }
 
   let imagePath = post.image_path;
   if (imageFile && imageFile.data && imageFile.data.length > 0) {
     const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowed.includes(imageFile.contentType)) {
-      const categories = getCategories();
-      return sendHTML(res, renderTemplate('edit-post', { user, post, categories, error: 'Format d\'image non supporté' }));
+      post.categories = getPostCategories(post.id);
+      const postCatIds = post.categories.map(c => c.id);
+      const categories = getCategories().map(c => ({ ...c, selected: postCatIds.includes(c.id) }));
+      return sendHTML(res, renderTemplate('edit-post', { user, post: { ...post, title, content }, categories, error: 'Format d\'image non supporté' }));
     }
     if (imageFile.data.length > 20 * 1024 * 1024) {
-      const categories = getCategories();
-      return sendHTML(res, renderTemplate('edit-post', { user, post, categories, error: 'Image trop volumineuse (max 20 Mo)' }));
+      post.categories = getPostCategories(post.id);
+      const postCatIds = post.categories.map(c => c.id);
+      const categories = getCategories().map(c => ({ ...c, selected: postCatIds.includes(c.id) }));
+      return sendHTML(res, renderTemplate('edit-post', { user, post: { ...post, title, content }, categories, error: 'Image trop volumineuse (max 20 Mo)' }));
     }
     const ext = path.extname(imageFile.filename) || '.jpg';
     const fileName = uuidv4() + ext;
