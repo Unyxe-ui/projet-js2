@@ -1,6 +1,6 @@
 <div class="form-page">
   <div class="form-card">
-    <h1>New Post</h1>
+    <h1>Nouveau post</h1>
 
     {{#if error}}
       <div class="alert alert-error">{{error}}</div>
@@ -9,12 +9,12 @@
     <form method="POST" action="/post/new" enctype="multipart/form-data" class="post-form">
       <div class="form-group">
         <label for="title">Titre</label>
-        <input type="text" id="title" name="title" required autofocus placeholder="An interesting title..." value="{{title}}">
+        <input type="text" id="title" name="title" required autofocus placeholder="Un titre intéressant..." value="{{title}}">
       </div>
 
       <div class="form-group">
         <label for="content">Contenu</label>
-        <textarea id="content" name="content" rows="8" required placeholder="What's on your mind?">{{content}}</textarea>
+        <textarea id="content" name="content" rows="8" required placeholder="À quoi penses-tu ?">{{content}}</textarea>
       </div>
 
       <div class="form-group">
