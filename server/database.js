@@ -123,7 +123,7 @@ async function init() {
     )
   `);
 
-  const cats = ['General', 'Technology', 'Gaming', 'Music', 'Art', 'Science'];
+const cats = ['Générale', 'Technologie', 'Gaming', 'Musique', 'Art', 'Science'];
   for (const c of cats) {
     try { db.run('INSERT INTO categories (name) VALUES (?)', [c]); } catch {}
   }
